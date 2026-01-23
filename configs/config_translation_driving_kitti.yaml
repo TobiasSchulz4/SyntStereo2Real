@@ -1,0 +1,52 @@
+seed: 42
+
+device: cuda
+
+epochs: 100
+lr: 1.0e-4
+batch_size: 4
+lr_decay_start: 50
+
+synthetic:
+  root: datasets/scene_flow
+  left_dir: left
+  right_dir: right
+  disp_dir: disp
+  file_list: null
+  resize: [256, 512]
+  normalize: true
+  compute_edges: true
+  return_edges: true
+
+real:
+  root: datasets/kitti2015
+  image_dir: images
+  file_list: null
+  resize: [256, 512]
+  normalize: true
+  compute_edges: true
+  return_edges: true
+
+model:
+  content_in_channels: 3
+  edge_in_channels: 1
+  content_base_channels: 64
+  edge_base_channels: 32
+  content_res_blocks: 4
+  edge_res_blocks: 2
+  style_dim: 8
+  decoder_res_blocks: 4
+
+patch_gan:
+  in_channels: 3
+  base_channels: 64
+  use_spectral_norm: false
+
+lambda_rec: 0.8
+lambda_cycle: 10.0
+lambda_adv: 10.0
+lambda_warp_l1: 1.0
+lambda_warp_ssim: 1.0
+
+log_every: 50
+save_every: 500

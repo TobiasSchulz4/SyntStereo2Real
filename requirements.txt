@@ -1,0 +1,13 @@
+torch==1.13.1
+# For CUDA builds, install the matching +cu11x wheel from PyTorch index.
+torchvision==0.14.1
+numpy>=1.21
+opencv-python>=4.5
+pillow>=8.3
+tensorboard>=2.8
+tqdm
+PyYAML>=6.0
+omegaconf>=2.1
+kornia>=0.6.0
+matplotlib
+scikit-image

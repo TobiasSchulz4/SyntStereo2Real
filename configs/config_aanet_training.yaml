@@ -1,0 +1,30 @@
+# Configuration for AANet downstream training
+# Adjust paths and hyperparameters as needed.
+
+# Root of third_party/aanet repository
+# If you use a submodule, keep this as "third_party/aanet"
+aanet_root: third_party/aanet
+
+# Training script within AANet repository
+train_script: third_party/aanet/train.py
+
+# Path to translated dataset produced by translate_dataset.py
+# Expected structure: left/, right/, disp/
+data_root: datasets/translated
+
+# Output directory for AANet checkpoints
+save_dir: experiments/checkpoints/aanet
+
+# Training hyperparameters
+batch_size: 20
+epochs: 400
+max_disp: 192
+lr: 1.0e-3
+
+# Optional additional CLI flags passed to AANet training script
+# Example:
+# extra_args:
+#   resume: /path/to/checkpoint.pth
+#   logdir: experiments/logs/aanet
+#   stereo: true
+extra_args: {}
