@@ -1,6 +1,6 @@
-torch==1.13.1
-# For CUDA builds, install the matching +cu11x wheel from PyTorch index.
-torchvision==0.14.1
+torch>=2.0.0
+# For CUDA builds, install the matching +cu11x/cu12x wheel from PyTorch index.
+torchvision>=0.15.0
 numpy>=1.21
 opencv-python>=4.5
 pillow>=8.3

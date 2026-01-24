@@ -88,15 +88,15 @@ def _aggregate_metrics(metrics_list: List[Dict[str, torch.Tensor]]) -> Dict[str,
 def evaluate(root: str, batch_size: int = 1, num_workers: int = 0, device: str = "cpu") -> Dict[str, float]:
     dataset = DispEvalDataset(root)
     loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, shuffle=False)
-    device = torch.device(device)
+    torch_device = torch.device(device)
 
     metrics_list = []
     for batch in loader:
-        pred = batch["pred"].to(device)
-        gt = batch["gt"].to(device)
+        pred = batch["pred"].to(torch_device)
+        gt = batch["gt"].to(torch_device)
         mask = batch.get("mask")
         if mask is not None:
-            mask = mask.to(device)
+            mask = mask.to(torch_device)
         metrics = compute_metrics(pred, gt, mask)
         metrics_list.append(metrics)
 
@@ -108,10 +108,18 @@ def main() -> None:
     parser.add_argument("--root", type=str, required=True, help="Evaluation root with pred/gt directories")
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--num_workers", type=int, default=0)
-    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--device", type=str, default="cuda")
     args = parser.parse_args()
 
-    metrics = evaluate(args.root, args.batch_size, args.num_workers, args.device)
+    device = args.device
+    if device == "cuda" and not torch.cuda.is_available():
+        print("WARNING: CUDA requested but not available. Falling back to CPU.")
+        device = "cpu"
+
+    if device == "cuda":
+        print(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
+
+    metrics = evaluate(args.root, args.batch_size, args.num_workers, device)
     print("Evaluation metrics:")
     for k, v in metrics.items():
         print(f"  {k}: {v:.4f}")

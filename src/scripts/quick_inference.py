@@ -88,6 +88,13 @@ def _translate_image(
 def main() -> None:
     args = _parse_args()
     device = args.device
+    
+    if device == "cuda" and not torch.cuda.is_available():
+        print("WARNING: CUDA requested but not available. Falling back to CPU.")
+        device = "cpu"
+    
+    if device == "cuda":
+        print(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
 
     gen = _load_generator(args.checkpoint, device)
 

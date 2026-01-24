@@ -142,11 +142,20 @@ def translate_dataset(
 
 def main() -> None:
     args = _parse_args()
+    device = args.device
+    
+    if device == "cuda" and not torch.cuda.is_available():
+        print("WARNING: CUDA requested but not available. Falling back to CPU.")
+        device = "cpu"
+    
+    if device == "cuda":
+        print(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
+
     translate_dataset(
         config_path=args.config,
         checkpoint_path=args.checkpoint,
         output_root=args.output_root,
-        device=args.device,
+        device=device,
         num_workers=args.num_workers,
         batch_size=args.batch_size,
         max_items=args.max_items,

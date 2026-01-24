@@ -20,6 +20,7 @@ from torch.utils.data import Dataset
 from .transforms import build_image_transform, build_disparity_transform
 from src.utils.sobel import sobel_edges
 
+MAX_DISP = 500
 
 def _load_image(path: str) -> Image.Image:
     return Image.open(path).convert("RGB")
@@ -30,7 +31,9 @@ def _load_disparity(path: str) -> np.ndarray:
         disp = np.load(path)
     else:
         disp = np.array(Image.open(path))
-    return disp.astype(np.float32)
+    disp =  disp.astype(np.float32)
+    disp[disp > MAX_DISP] = MAX_DISP
+    return disp
 
 
 class SyntheticStereoDataset(Dataset):
@@ -45,6 +48,7 @@ class SyntheticStereoDataset(Dataset):
         left_dir: str = "left",
         right_dir: str = "right",
         disp_dir: str = "disp",
+        disp_rename: Optional[Tuple[str, str]] = None,
         file_list: Optional[str] = None,
         resize: Optional[Tuple[int, int]] = None,
         normalize: bool = True,
@@ -55,6 +59,7 @@ class SyntheticStereoDataset(Dataset):
         self.left_dir = os.path.join(root, left_dir)
         self.right_dir = os.path.join(root, right_dir)
         self.disp_dir = os.path.join(root, disp_dir)
+        self.disp_rename = disp_rename
         self.resize = resize
         self.normalize = normalize
         self.compute_edges = compute_edges
@@ -76,8 +81,9 @@ class SyntheticStereoDataset(Dataset):
         fid = self.ids[idx]
         left = os.path.join(self.left_dir, f"{fid}.png")
         right = os.path.join(self.right_dir, f"{fid}.png")
-        disp_npy = os.path.join(self.disp_dir, f"{fid}.npy")
-        disp_png = os.path.join(self.disp_dir, f"{fid}.png")
+        disp_name = fid if self.disp_rename is None else fid.replace(*self.disp_rename)
+        disp_npy = os.path.join(self.disp_dir, f"{disp_name}.npy")
+        disp_png = os.path.join(self.disp_dir, f"{disp_name}.png")
         disp = disp_npy if os.path.exists(disp_npy) else disp_png
         return left, right, disp
 

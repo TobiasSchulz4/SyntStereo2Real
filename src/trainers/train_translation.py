@@ -79,6 +79,7 @@ def _build_dataloaders(cfg: Dict[str, Any], num_workers: int) -> Dict[str, DataL
         left_dir=syn_cfg.get("left_dir", "left"),
         right_dir=syn_cfg.get("right_dir", "right"),
         disp_dir=syn_cfg.get("disp_dir", "disp"),
+        disp_rename=tuple(syn_cfg.get("disp_rename")) if syn_cfg.get("disp_rename") else None,
         file_list=syn_cfg.get("file_list"),
         resize=tuple(syn_cfg.get("resize")) if syn_cfg.get("resize") else None,
         normalize=True,
@@ -305,12 +306,25 @@ def train(config_path: str, output_root: str, device: str, num_workers: int, log
     writer.close()
 
 
+def _validate_device(device_str: str) -> str:
+    if device_str == "cuda":
+        if not torch.cuda.is_available():
+            print("WARNING: CUDA requested but not available. Falling back to CPU.")
+            return "cpu"
+    return device_str
+
+
 def main() -> None:
     args = _parse_args()
+    device = _validate_device(args.device)
+
+    if device == "cuda":
+        print(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
+
     train(
         config_path=args.config,
         output_root=args.output,
-        device=args.device,
+        device=device,
         num_workers=args.num_workers,
         log_every=args.log_every,
         save_every=args.save_every,
