@@ -16,7 +16,7 @@ synthetic:
   disp_dir: disp
   disp_rename: ["rgb", "distance_to_image_plane"]
   file_list: null
-  resize: [666, 576]
+  resize: [332, 288]
   normalize: true
   compute_edges: true
   return_edges: true
@@ -25,7 +25,7 @@ real:
   root: datasets/real
   image_dir: images
   file_list: null
-  resize: [666, 576]
+  resize: [332, 288]
   normalize: true
   compute_edges: true
   return_edges: true
