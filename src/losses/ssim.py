@@ -22,9 +22,9 @@ def _gaussian_window(window_size: int, sigma: float, device: torch.device, dtype
     return window_2d
 
 
-def _create_window(window_size: int, channels: int, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
-    window_2d = _gaussian_window(window_size, sigma=1.5, device=device, dtype=dtype)
-    window_2d = window_2d.unsqueeze(0).unsqueeze(0)
+def _create_window(window_size: int, sigma: float, channels: int, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
+    window_2d = _gaussian_window(window_size, sigma=sigma, device=device, dtype=dtype)
+    window_2d = window_2d.unsqueeze(0)
     window = window_2d.expand(channels, 1, window_size, window_size).contiguous()
     return window
 
@@ -33,6 +33,7 @@ def ssim(
     img1: torch.Tensor,
     img2: torch.Tensor,
     window_size: int = 11,
+    sigma: float = 1.5,
     C1: float = 0.01 ** 2,
     C2: float = 0.03 ** 2,
 ) -> torch.Tensor:
@@ -51,7 +52,7 @@ def ssim(
         raise ValueError("SSIM expects inputs with the same shape")
 
     b, c, h, w = img1.shape
-    window = _create_window(window_size, c, img1.device, img1.dtype)
+    window = _create_window(window_size, sigma, c, img1.device, img1.dtype)
 
     mu1 = F.conv2d(img1, window, padding=window_size // 2, groups=c)
     mu2 = F.conv2d(img2, window, padding=window_size // 2, groups=c)
