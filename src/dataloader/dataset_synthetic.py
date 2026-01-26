@@ -70,7 +70,6 @@ class SyntheticStereoDataset(Dataset):
                 self.ids = [line.strip() for line in f if line.strip()]
         else:
             self.ids = sorted([os.path.splitext(f)[0] for f in os.listdir(self.left_dir)])
-        self.ids = self.ids[:10]
 
         self.img_tf = build_image_transform(resize=resize, normalize=normalize)
         self.disp_tf = build_disparity_transform(resize=resize)

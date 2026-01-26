@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import tqdm
 import random
 from typing import Dict, Any
 
@@ -166,8 +167,8 @@ def train(config_path: str, output_root: str, device: str, num_workers: int, log
     global_step = 0
 
     real_iter = iter(real_loader)
-    for epoch in range(epochs):
-        for syn_batch in syn_loader:
+    for epoch in tqdm.trange(epochs):
+        for syn_batch in tqdm.tqdm(syn_loader, desc=f"batches in epoch {epoch}"):
             try:
                 real_batch = next(real_iter)
             except StopIteration:

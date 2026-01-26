@@ -45,7 +45,6 @@ class RealImageDataset(Dataset):
             img_root = os.path.join(root, image_dir)
             self.ids = [os.path.splitext(fn)[0] for fn in os.listdir(img_root) if fn.lower().endswith((".png", ".jpg", ".jpeg"))]
             self.ids.sort()
-        self.ids = self.ids[:10]
 
         self.img_tf = build_image_transform(resize=resize, normalize=normalize)
 
