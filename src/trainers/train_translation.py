@@ -66,8 +66,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--log_every", type=int, default=50)
     parser.add_argument("--save_every", type=int, default=500)
-    parser.add_argument("--use_edge", action="store_true", default=True)
-    parser.add_argument("--use_warp", action="store_true", default=True)
+    parser.add_argument("--use_edge", dest="use_edge", action="store_true")
+    parser.add_argument("--no_edge", dest="use_edge", action="store_false")
+    parser.set_defaults(use_edge=True)
+    parser.add_argument("--use_warp", dest="use_warp", action="store_true")
+    parser.add_argument("--no_warp", dest="use_warp", action="store_false")
+    parser.set_defaults(use_warp=True)
     return parser.parse_args()
 
 
@@ -227,11 +231,9 @@ def train(config_path: str, output_root: str, device: str, num_workers: int, log
             l_adv = gan_generator_loss(pred_fake_a) + gan_generator_loss(pred_fake_b)
 
             if use_warp:
-                l_warp, l_warp_l1, l_warp_ssim = warp_loss(x_ab, x_rab, xd, lambda_l1=lambda_l1, lambda_ssim=lambda_ssim)
+                l_warp, _, _ = warp_loss(x_ab, x_rab, xd, lambda_l1=lambda_l1, lambda_ssim=lambda_ssim)
             else:
                 l_warp = torch.tensor(0.0, device=device)
-                l_warp_l1 = torch.tensor(0.0, device=device)
-                l_warp_ssim = torch.tensor(0.0, device=device)
 
             l_gen = lambda_rec * l_rec + lambda_cycle * l_cycle + lambda_adv * l_adv + l_warp
 
@@ -246,11 +248,11 @@ def train(config_path: str, output_root: str, device: str, num_workers: int, log
 
             pred_real_a = disc_a(xl)
             pred_fake_a = disc_a(x_ba_det)
-            d_a_loss, d_a_real, d_a_fake = gan_discriminator_loss(pred_real_a, pred_fake_a)
+            d_a_loss, _, _ = gan_discriminator_loss(pred_real_a, pred_fake_a)
 
             pred_real_b = disc_b(xb)
             pred_fake_b = disc_b(x_ab_det)
-            d_b_loss, d_b_real, d_b_fake = gan_discriminator_loss(pred_real_b, pred_fake_b)
+            d_b_loss, _, _ = gan_discriminator_loss(pred_real_b, pred_fake_b)
 
             opt_da.zero_grad()
             d_a_loss.backward()

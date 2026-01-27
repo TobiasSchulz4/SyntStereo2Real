@@ -92,7 +92,7 @@ def random_hflip(sample: dict, p: float = 0.5) -> dict:
     def _flip(t: torch.Tensor) -> torch.Tensor:
         return torch.flip(t, dims=[-1])
 
-    for key in ["xl", "xr", "xl_edge", "xr_edge"]:
+    for key in ["xl", "xr", "xl_edge", "xr_edge", "xb", "xb_edge"]:
         if key in sample and sample[key] is not None:
             sample[key] = _flip(sample[key])
 

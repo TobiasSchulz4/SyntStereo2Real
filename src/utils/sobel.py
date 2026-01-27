@@ -53,7 +53,7 @@ class SobelOperator(nn.Module):
 def sobel_edges(x: torch.Tensor, return_magnitude: bool = True, normalize: bool = True) -> torch.Tensor:
     """Functional interface for Sobel edges."""
     op = SobelOperator(in_channels=x.shape[1], return_magnitude=return_magnitude, normalize=normalize)
-    op = op.to(x.device)
+    op = op.to(device=x.device, dtype=x.dtype)
     return op(x)
 
 
