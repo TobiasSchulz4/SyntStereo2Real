@@ -83,8 +83,8 @@ class SyntheticStereoDataset(Dataset):
         right = os.path.join(self.right_dir, f"{fid}.png")
         disp_name = fid if self.disp_rename is None else fid.replace(*self.disp_rename)
         disp_npy = os.path.join(self.disp_dir, f"{disp_name}.npy")
-        disp_png = os.path.join(self.disp_dir, f"{disp_name}.png")
-        disp = disp_npy if os.path.exists(disp_npy) else disp_png
+        disp_tiff = os.path.join(self.disp_dir, f"{disp_name}.tif")
+        disp = disp_npy if os.path.exists(disp_npy) else disp_tiff
         return left, right, disp
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:

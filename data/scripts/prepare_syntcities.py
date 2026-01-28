@@ -7,7 +7,7 @@ Expected layout after running:
   <output_root>/
     left/   (RGB left images)
     right/  (RGB right images)
-    disp/   (disparity maps .npy or .png)
+    disp/   (disparity maps .npy or .tif)
     files.txt (optional list of sample stems)
 
 The script supports either copying or symlinking files from the source tree.
@@ -19,12 +19,12 @@ import shutil
 from typing import List, Tuple
 
 
-def _find_files(root: str, exts: Tuple[str, ...]) -> List[str]:
+def _find_files(root: str, glob: str, exts: Tuple[str, ...]) -> List[str]:
     files = []
-    for dirpath, _, filenames in os.walk(root):
-        for name in filenames:
-            if name.lower().endswith(exts):
-                files.append(os.path.join(dirpath, name))
+    for d in os.listdir(root):
+        for f in os.listdir(os.path.join(root, d, glob, "training")):
+            if f.endswith(exts):
+                files.append(os.path.join(root, d, glob, "training", f))
     return sorted(files)
 
 
@@ -55,16 +55,19 @@ def prepare(
     disp_glob: Tuple[str, ...],
     use_symlink: bool,
 ) -> None:
-    left_files = _find_files(os.path.join(src_root, "left"), left_glob)
-    right_files = _find_files(os.path.join(src_root, "right"), right_glob)
-    disp_files = _find_files(os.path.join(src_root, "disp"), disp_glob)
+    left_files = _find_files(src_root, "left_RGB", left_glob)
+    right_files = _find_files(src_root, "right_RGB", right_glob)
+    disp_files = _find_files(src_root, "disparity_left", disp_glob)
 
     if not left_files:
-        left_files = _find_files(src_root, left_glob)
+        raise ValueError("No left RGB files found")
     if not right_files:
-        right_files = _find_files(src_root, right_glob)
+        raise ValueError("No right RGB files found")
     if not disp_files:
-        disp_files = _find_files(src_root, disp_glob)
+        raise ValueError("No disparity files found")
+
+    if len(left_files) != len(right_files) or len(left_files) != len(disp_files):
+        raise ValueError("Number of left, right and disparity files must match")
 
     left_dir = os.path.join(out_root, "left")
     right_dir = os.path.join(out_root, "right")
@@ -73,30 +76,26 @@ def prepare(
     _ensure_dir(right_dir)
     _ensure_dir(disp_dir)
 
-    stems = set()
+    index = 0
     for lf in left_files:
-        stem = _stem(lf)
-        stems.add(stem)
+        stem = index
         _link_or_copy(lf, os.path.join(left_dir, f"{stem}.png"), use_symlink)
+        index += 1
 
+    index = 0
     for rf in right_files:
-        stem = _stem(rf)
-        stems.add(stem)
+        stem = index
         _link_or_copy(rf, os.path.join(right_dir, f"{stem}.png"), use_symlink)
+        index += 1
 
+    index = 0
     for df in disp_files:
-        stem = _stem(df)
-        stems.add(stem)
+        stem = index
         ext = os.path.splitext(df)[1].lower()
         dst = os.path.join(disp_dir, f"{stem}{ext}")
         _link_or_copy(df, dst, use_symlink)
 
-    file_list = os.path.join(out_root, "files.txt")
-    with open(file_list, "w", encoding="utf-8") as f:
-        for s in sorted(stems):
-            f.write(s + "\n")
-
-    print(f"Prepared {len(stems)} samples at {out_root}")
+    print(f"Prepared {len(left_files)} samples at {out_root}")
 
 
 def _parse_args() -> argparse.Namespace:
@@ -116,7 +115,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--disp_exts",
-        default=".npy,.png",
+        default=".npy,.tif",
         help="Comma-separated extensions for disparity maps",
     )
     return parser.parse_args()
