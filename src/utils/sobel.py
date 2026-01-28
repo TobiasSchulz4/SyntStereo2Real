@@ -1,8 +1,6 @@
 """Sobel edge extraction utilities."""
 from __future__ import annotations
 
-from typing import Tuple
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,13 +21,23 @@ class SobelOperator(nn.Module):
         gx = torch.tensor([[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]])
         gy = torch.tensor([[1.0, 2.0, 1.0], [0.0, 0.0, 0.0], [-1.0, -2.0, -1.0]])
 
-        weight = torch.zeros(2, in_channels, 3, 3)
+        # Compute gradients per input channel (no channel mixing) and reduce afterwards.
+        # Conv2d in PyTorch implements cross-correlation, which matches the typical Sobel
+        # mask usage in image processing.
+        weight = torch.zeros(2 * in_channels, 1, 3, 3)
         for c in range(in_channels):
-            weight[0, c] = gx
-            weight[1, c] = gy
+            weight[2 * c + 0, 0] = gx
+            weight[2 * c + 1, 0] = gy
 
         self.register_buffer("weight", weight)
-        self.conv = nn.Conv2d(in_channels, 2, kernel_size=3, padding=1, bias=False)
+        self.conv = nn.Conv2d(
+            in_channels,
+            2 * in_channels,
+            kernel_size=3,
+            padding=0,
+            bias=False,
+            groups=in_channels,
+        )
         with torch.no_grad():
             self.conv.weight.copy_(weight)
         for param in self.conv.parameters():
@@ -37,14 +45,20 @@ class SobelOperator(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x expected in range [-1,1] or [0,1]
+        x = F.pad(x, (1, 1, 1, 1), mode="replicate")
         grads = self.conv(x)
-        gx, gy = grads[:, 0:1], grads[:, 1:2]
+        gx = grads[:, 0::2, :, :]
+        gy = grads[:, 1::2, :, :]
         if self.return_magnitude:
-            mag = torch.sqrt(gx ** 2 + gy ** 2 + 1e-12)
+            mag = torch.sqrt(gx**2 + gy**2 + 1e-12)
+            mag = mag.mean(dim=1, keepdim=True)
             if self.normalize:
                 mag = mag / (mag.amax(dim=(-2, -1), keepdim=True) + 1e-6)
             return mag
-        grads_out = grads
+
+        gx_mean = gx.mean(dim=1, keepdim=True)
+        gy_mean = gy.mean(dim=1, keepdim=True)
+        grads_out = torch.cat([gx_mean, gy_mean], dim=1)
         if self.normalize:
             grads_out = grads_out / (grads_out.abs().amax(dim=(-2, -1), keepdim=True) + 1e-6)
         return grads_out
